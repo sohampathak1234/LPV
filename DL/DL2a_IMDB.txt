@@ -1,0 +1,63 @@
+import numpy as np
+import matplotlib as plt
+from tensorflow.keras.datasets import imdb
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+
+(train_data, train_labels), (test_data, test_labels) = imdb.load_data(num_words=10000)
+
+
+def vectorize_sequences(sequences, dimension=10000):
+    results = np.zeros((len(sequences), dimension))
+    for i, sequence in enumerate(sequences):
+        results[i, sequence] = 1.
+    return results
+
+
+x_train = vectorize_sequences(train_data)
+x_test = vectorize_sequences(test_data)
+
+
+y_train = np.asarray(train_labels).astype('float32')
+y_test = np.asarray(test_labels).astype('float32')
+
+
+# Define DNN model
+model = Sequential([
+    Dense(16, activation='relu', input_shape=(10000,)),
+    Dense(16, activation='relu'),
+    Dense(1, activation='sigmoid')
+])
+
+
+# Compile model
+model.compile(optimizer='rmsprop',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+
+
+history = model.fit(x_train, y_train, epochs=4, batch_size=512)
+
+
+results = model.evaluate(x_test, y_test)
+print("Test Loss:", results[0])
+print("Test Accuracy:", results[1])
+
+
+# Predictions
+predictions = model.predict(x_test)
+predicted_labels = [1 if pred > 0.5 else 0 for pred in predictions]
+
+
+# Calculating precision, recall, f1_score, and support
+from sklearn.metrics import precision_recall_fscore_support
+precision, recall, f1_score, support = precision_recall_fscore_support(y_test, predicted_labels, average=None)
+print("Precision for positive reviews:", precision[1])
+print("Recall for positive reviews:", recall[1])
+print("F1 Score for positive reviews:", f1_score[1])
+print("Support for positive reviews:", support[1])
+print("Precision for negative reviews:", precision[0])
+print("Recall for negative reviews:", recall[0])
+print("F1 Score for negative reviews:", f1_score[0])
+print("Support for negative reviews:", support[0])
